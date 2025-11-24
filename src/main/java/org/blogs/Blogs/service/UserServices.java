@@ -186,7 +186,7 @@ public class UserServices {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .phoneNumber(user.getPhoneNumber())
-                .PhotoUrl(user.getPhotoUrl())
+                .photoUrl(user.getPhotoUrl())
                 .build();
     }
 

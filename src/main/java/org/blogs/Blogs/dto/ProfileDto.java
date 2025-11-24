@@ -20,5 +20,5 @@ public class ProfileDto {
 
     private String phoneNumber;
 
-    private String PhotoUrl;
+    private String photoUrl;
 }

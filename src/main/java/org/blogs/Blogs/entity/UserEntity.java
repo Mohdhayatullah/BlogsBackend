@@ -2,6 +2,7 @@ package org.blogs.Blogs.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,7 +37,7 @@ public class UserEntity {
 
     @Column(nullable = false,unique = true)
     private String phoneNumber;
-
+    @Size(max = 1000000, message = "Description to long}")
     private String photoUrl;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
