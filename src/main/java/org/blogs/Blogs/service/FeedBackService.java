@@ -2,6 +2,7 @@ package org.blogs.Blogs.service;
 
 import jakarta.transaction.Transactional;
 
+import lombok.RequiredArgsConstructor;
 import org.blogs.Blogs.entity.BlogPost;
 import org.blogs.Blogs.entity.FeedBack;
 import org.blogs.Blogs.entity.UserEntity;
@@ -19,16 +20,15 @@ import java.util.Optional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class FeedBackService {
 
-    @Autowired
-    private FeedRepo feedBackRepository;
 
-    @Autowired
-    private BlogRepo blogPostRepository;
+    private final FeedRepo feedBackRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final BlogRepo blogPostRepository;
+
+    private final UserRepository userRepository;
 
     public FeedBack createFeedback(Long blogId, double rating, String comment) {
 
