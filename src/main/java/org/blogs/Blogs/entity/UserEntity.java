@@ -37,7 +37,8 @@ public class UserEntity {
 
     @Column(nullable = false,unique = true)
     private String phoneNumber;
-    @Size(max = 1000000, message = "Description to long}")
+
+    @Column(length = 1000)
     private String photoUrl;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
