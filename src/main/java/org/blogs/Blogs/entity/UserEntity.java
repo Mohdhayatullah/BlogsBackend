@@ -19,10 +19,9 @@ import java.util.List;
 @NoArgsConstructor
 @Table(name = "user_tbl")
 public class UserEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
 
     @Column(nullable = false)
     private String fullName;
@@ -34,14 +33,15 @@ public class UserEntity {
 
     private String otp;
 
-//    private String imageUrl;
-
+    private String public_id;
+    private String imageUrl;
+//
     @Column(nullable = false,unique = true)
     private String phoneNumber;
 
-    @Lob
-    @Column(columnDefinition = "LONGTEXT")
-    private String photoUrl;
+//    @Lob
+//    @Column(columnDefinition = "LONGTEXT")
+//    private String photoUrl;
 
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

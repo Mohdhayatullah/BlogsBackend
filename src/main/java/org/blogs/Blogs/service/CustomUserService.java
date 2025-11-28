@@ -20,6 +20,8 @@ public class CustomUserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UserEntity user = userRepository.findByEmail(email).orElseThrow(()->
                 new IllegalArgumentException("User not found with this email"));
+
+        CustomUserDetails customUserDetails = new CustomUserDetails(user);
         return User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())

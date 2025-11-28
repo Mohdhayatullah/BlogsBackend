@@ -1,13 +1,19 @@
 package org.blogs.Blogs.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.blogs.Blogs.dto.BlogDto;
+import org.blogs.Blogs.dto.BlogResponseDTO;
 import org.blogs.Blogs.entity.UserEntity;
+import org.blogs.Blogs.service.BlogViewService;
 import org.blogs.Blogs.service.BlogsService;
 import org.blogs.Blogs.service.UserServices;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,89 +23,62 @@ import java.util.List;
 public class BlogsController {
 
     private final BlogsService blogsService;
-    private final UserServices services;
+    private final BlogViewService blogViewService;
 
-
-
-//    @PostMapping
-//    public ResponseEntity<BlogDto> createBlogs(@RequestBody BlogDto blogDto){
-//        try{
-//            return ResponseEntity.status(HttpStatus.CREATED).body(blogsService.createBlogs(blogDto));
-//        }catch (Exception e){
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//        }
-//    }
-
-    @PostMapping
-    public ResponseEntity<BlogDto> createBlog(@RequestBody BlogDto dto) {
-        try{
-        BlogDto created = blogsService.createBlogs(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);}
-        catch (Exception e){
-            System.out.println("During appears error CREATE BLOGS "+ e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    // ✅ CREATE BLOG
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<?> createBlog(
+            @RequestPart("data") String data,
+            @RequestPart(value = "file", required = false) MultipartFile file) throws JsonProcessingException {
+        System.out.println(data);
+        ObjectMapper objectMapper = new ObjectMapper();
+        BlogDto dto = objectMapper.readValue(data,BlogDto.class);
+        blogsService.createBlogs(dto, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Blog Successfully created");
     }
 
-
+    // ✅ GET ALL BLOGS
     @GetMapping
-    public ResponseEntity<List<BlogDto>> getAllBlogs(){
-        try{
-            return ResponseEntity.status(HttpStatus.OK).body(blogsService.getAllBlogs());
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<List<BlogResponseDTO>> getAllBlogs() {
+        return ResponseEntity.ok(blogsService.getAllBlogs());
     }
 
-
+    // ✅ GET MY BLOGS
     @GetMapping("/private")
-    public ResponseEntity<List<BlogDto>> getMyBlogs(){
-        try{
-            return ResponseEntity.status(HttpStatus.OK).body(blogsService.getUserBlogs());
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<List<BlogResponseDTO>> getMyBlogs() {
+        return ResponseEntity.ok(blogsService.getUserBlogs());
     }
 
-
+    // ✅ GET BLOG BY ID + VIEW TRACK
     @GetMapping("/{id}")
-    public ResponseEntity<BlogDto> getBlogsById(@PathVariable Long id){
-        try{
-            return ResponseEntity.status(HttpStatus.OK).body(blogsService.getBlogsById(id));
-        }catch (Exception e){
-            System.out.println("internal server error+"+e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<BlogResponseDTO> getBlogById(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long userId,
+            HttpServletRequest request) {
+
+        String ipAddress = request.getRemoteAddr();
+        blogViewService.addView(id, userId, ipAddress);
+
+        return ResponseEntity.ok(blogsService.getBlogsById(id));
     }
 
+    // ✅ UPDATE BLOG
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<BlogResponseDTO> updateBlog(
+            @PathVariable Long id,
+            @RequestPart("data") String data,
+            @RequestPart(value = "file", required = false) MultipartFile file) throws JsonProcessingException {
 
-    @PutMapping("/{put}")
-    public ResponseEntity<BlogDto> update(@PathVariable(name ="put") Long id ,@RequestBody BlogDto blogDto){
-        try{
-            return ResponseEntity.status(HttpStatus.OK).body(blogsService.update(id,blogDto));
-        }catch (Exception e){
-            System.out.println("internal server error+"+e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        ObjectMapper objectMapper = new ObjectMapper();
+        BlogDto dto = objectMapper.readValue(data,BlogDto.class);
+        BlogResponseDTO response = blogsService.update(id, dto, file);
+        return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{put}")
-    public ResponseEntity<Void> update(@PathVariable(name ="put") Long id){
-        try{
-            blogsService.delete(id);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-
-    @PatchMapping
-    public ResponseEntity<UserEntity> forgetPassword(@RequestParam String pass){
-        try {
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(services.forgetPassword(pass));
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    // ✅ DELETE BLOG
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBlog(@PathVariable Long id) {
+        blogsService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

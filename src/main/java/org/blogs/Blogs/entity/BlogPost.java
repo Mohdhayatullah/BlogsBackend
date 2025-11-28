@@ -1,7 +1,9 @@
 package org.blogs.Blogs.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -28,7 +30,7 @@ public class BlogPost{
 
     private String title;
 
-    @Size(max = 1000000, message = "Description to long {up to 1000 words}")
+    @Size(max = 1000000, message = "Description to long {up to 1000000 words}")
     @Column(length = 1000000, columnDefinition = "TEXT")
     private String description;
 
@@ -42,6 +44,9 @@ public class BlogPost{
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    private String public_id;
+    private String imagePath;
+
     private boolean published;
 
     private String slug;
@@ -49,10 +54,17 @@ public class BlogPost{
     @ElementCollection
     private List<String> tags = new ArrayList<>();
 
-    @OneToMany(mappedBy = "blog", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonIgnore
+    @OneToMany(mappedBy = "blog", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<FeedBack> feedBacks = new ArrayList<>();
 
+    @OneToMany(mappedBy = "blog", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BlogLike> likes = new ArrayList<>();
+
     private double averageRating;
+
+    private long likeCount;
+
+    private long viewCount;
 
 }

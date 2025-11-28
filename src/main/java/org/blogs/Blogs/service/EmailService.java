@@ -20,7 +20,7 @@ public class EmailService {
         try{
             SimpleMailMessage msg = new SimpleMailMessage();
             msg.setFrom(email);
-            msg.setTo(email);
+            msg.setTo(to);
             msg.setSubject(subject);
             msg.setText(body);
             javaMailSender.send(msg);

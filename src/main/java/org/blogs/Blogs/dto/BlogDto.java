@@ -1,5 +1,7 @@
 package org.blogs.Blogs.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.blogs.Blogs.entity.UserEntity;
 
@@ -12,26 +14,14 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class BlogDto {
-
     private Long id;
+    @NotBlank(message = "title must be required")
     private String title;
-
+    @NotBlank(message = "title must be required")
     private String description;
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
-
-//    private UserEntity user; instead of
     private Long userId;
     private String userName;
-
-    private boolean published;
-
+    private Boolean published;
     private String slug;
-
-    private double averageRating;
-
     private List<String> tags;
-
 }

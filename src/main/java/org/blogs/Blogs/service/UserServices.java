@@ -2,12 +2,14 @@ package org.blogs.Blogs.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.blogs.Blogs.dto.CloudinaryDto;
 import org.blogs.Blogs.dto.LoginDto;
 import org.blogs.Blogs.dto.ProfileDto;
 import org.blogs.Blogs.dto.SignUpDto;
 import org.blogs.Blogs.entity.UserEntity;
 
 import org.blogs.Blogs.repository.UserRepository;
+import org.blogs.Blogs.util.CloudinaryService;
 import org.blogs.Blogs.util.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +18,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -27,35 +32,33 @@ public class UserServices {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService service;
+    private final CloudinaryService cloudinaryService;
 
 
 
     @Transactional
-    public SignUpDto registerUser(SignUpDto dto) throws IllegalAccessException {
+    public SignUpDto registerUser(SignUpDto dto){
         if(repository.existsByEmail(dto.getEmail())){
-            throw new IllegalAccessException("Email already exist");
+            throw new RuntimeException("Email already exist");
         }
-        new UserEntity();
-        UserEntity newUser;
-        newUser = toEntity(dto);
+//
+        UserEntity newUser = toEntity(dto);
         repository.save(newUser);
         service.sendMail(dto.getEmail(), "Registration successful","APPLICATION STATUS 200K\n\n😇Welcome to our BlogHub\n\nDiscover amazing stories, share your thoughts, and connect with writers from around the world.\n\n\n💕💕💕💕😍✅");
         return toDto(newUser);
     }
 
-    public LoginDto login(LoginDto dto) throws IllegalAccessException {
+    public Map<String,String> login(LoginDto dto) {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getEmail(),dto.getPassword()));
 
             String token = jwt.generateToken(dto.getEmail());
-            LoginDto loginDto = new LoginDto();
-            loginDto.setEmail(dto.getEmail());
-            loginDto.setToken(token);
-            return loginDto;
+            return Map.of(
+                    "token",token
+            );
         }catch (Exception e){
             throw new RuntimeException("Invalid email or password");
         }
-
     }
 
     public UserEntity getCurrentProfile(){
@@ -85,96 +88,52 @@ public class UserServices {
                 .build();
     }
 
-//    private ProfileDto profileDto(Profile dto){
-//        return ProfileDto.builder()
-//                .id(dto.getId())
-//                .fullName(dto.getUser().getFullName())
-//                .email(dto.getUser().getEmail())
-//                .phoneNumber(dto.getUser().getPhoneNumber())
-//                .PhotoUrl(dto.getPhotoUrl())
-//                .build();
-//    }
-//
-//    private Profile profile(ProfileDto dto, UserEntity user){
-//        //        if (dto.getEmail() != null){
-//////            UserEntity entity = userRepository.findByEmail(dto.getEmail()).orElseThrow(()-> new IllegalArgumentException("user not found"));
-////            entity.setId(entity.getId());
-////            entity.setEmail(dto.getEmail());
-////            entity.setFullName(dto.getFullName());
-////            entity.setPhoneNumber(dto.getPhoneNumber());
-////            dto1.setUser(entity);
-////        }
-//         return Profile.builder()
-//                 .PhotoUrl(dto.getPhotoUrl())
-//                 .user(user)
-//                 .build();
-//    }
-//
-//    // profile data
-//    public ProfileDto getData(){
-//        UserEntity cUser = getCurrentProfile();
-//        Profile profile = repo.findByUser(cUser).orElseGet(()->{
-//                Profile pro = new Profile();
-//                pro.setUser(cUser);
-//                pro.setPhotoUrl(new Profile().getPhotoUrl());
-//                return repo.save(pro);
-//                });
-//
-//        return profileDto(profile);
-//    }
-//
-//    // profile data
-//    public ProfileDto putData(ProfileDto profile){
-////        Profile profile1 = userRepository.findByEmail(profile.getEmail()).orElseThrow(()-> new IllegalArgumentException("User Not found!, "));
-////        profile1.setUser(profile.getEmail() != null ? profile.ugetEmail() : profile1.getUser());
-////        profile1.setPhotoUrl(profile.getPhotoUrl() != null ? profile.getPhotoUrl() : profile1.getPhotoUrl());
-//
-//        UserEntity user = userRepository.findByEmail(profile.getEmail()).orElseThrow(()-> new IllegalArgumentException("user not found"));
-//
-//        user.setEmail(profile.getEmail() !=null? profile.getEmail() : user.getEmail());
-//        user.setFullName(profile.getFullName() !=null? profile.getFullName() : user.getFullName());
-//        user.setPhoneNumber(profile.getPhoneNumber() !=null? profile.getPhoneNumber() : user.getPhoneNumber());
-//        Profile profile1 = repo.findByUser(user).orElseGet(()->{
-//            Profile profile2 = new Profile();
-//            profile2.setUser(user);
-//            return profile2;
-//        });
-//        profile1.setPhotoUrl(profile.getPhotoUrl());
-//        repo.save(profile1);
-//        System.out.println(profile1.getUser());
-//        System.out.println(profile1.getUser().getPhoneNumber());
-//        System.out.println(profile1.getUser().getEmail());
-//        System.out.println(profile1.getUser().getFullName());
-//        System.out.println(profile1.getUser().getPhoneNumber());
-//        System.out.println(profile1.getPhotoUrl());
-//        return profileDto(profile1);
-//    }
-
 
 
     public UserEntity forgetPassword(String pass){
         UserEntity user = getCurrentProfile();
-        UserEntity newUser = userRepository.findByEmail(user.getEmail()).orElseThrow(()-> new IllegalArgumentException("User not found"));
-        newUser.setPassword(pass);
+        UserEntity newUser =
+                userRepository.findByEmail(user.getEmail())
+                        .orElseThrow(()-> new UsernameNotFoundException("User not found"));
+        newUser.setPassword(passwordEncoder.encode(pass));
         return userRepository.save(newUser);
     }
 
     // Profile Api
     public ProfileDto getData(){
         UserEntity currentProfileUser = getCurrentProfile();
-//        return new ProfileDto(currentProfileUser.getId(),
-//                currentProfileUser.getFullName(),
-//                currentProfileUser.getEmail(),
-//                currentProfileUser.getPhoneNumber(),
-//                currentProfileUser.getPhotoUrl());
         return toProfileDto(currentProfileUser);
     }
 
-    public ProfileDto putData(ProfileDto dto){
+    public ProfileDto putData(ProfileDto dto, MultipartFile file) {
+
         UserEntity user = getCurrentProfile();
-        user.setFullName(dto.getFullName() != null ? dto.getFullName() : user.getFullName());
-        user.setPhoneNumber(dto.getPhoneNumber() != null ? dto.getPhoneNumber() : user.getPhoneNumber());
-        user.setPhotoUrl(dto.getPhotoUrl() != null? dto.getPhotoUrl() : user.getPhotoUrl());
+        if (user == null) {
+            throw new UsernameNotFoundException("User not authenticated");
+        }
+
+        if (dto.getFullName() != null) {
+            user.setFullName(dto.getFullName());
+        }
+
+        if (dto.getPhoneNumber() != null) {
+            user.setPhoneNumber(dto.getPhoneNumber());
+        }
+
+        // ⚠️ optional: restrict email update
+        if (dto.getEmail() != null) {
+            user.setEmail(dto.getEmail());
+        }
+
+        // ✅ FIXED
+        if (file != null && !file.isEmpty()) {
+            CloudinaryDto cloudinaryDto =
+                    cloudinaryService.uploadOrReplaceImage(user.getPublic_id(), file);
+
+            user.setPublic_id(cloudinaryDto.getPublicId());
+            user.setImageUrl(cloudinaryDto.getSecureUrl());
+        }
+
         userRepository.save(user);
         return toProfileDto(user);
     }
@@ -186,7 +145,7 @@ public class UserServices {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .phoneNumber(user.getPhoneNumber())
-                .photoUrl(user.getPhotoUrl())
+                .imageUrl(user.getImageUrl())
                 .build();
     }
 
@@ -195,7 +154,7 @@ public class UserServices {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .phoneNumber(user.getPhoneNumber())
-                .photoUrl(user.getPhotoUrl())
+                .imageUrl(user.getImageUrl())
                 .build();
     }
 

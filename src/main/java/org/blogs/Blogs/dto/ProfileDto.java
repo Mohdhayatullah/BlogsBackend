@@ -12,14 +12,9 @@ import org.springframework.web.multipart.MultipartFile;
 @AllArgsConstructor
 @Builder
 public class ProfileDto {
-
-
     private Long id;
     private String fullName;
-
     private String email;
-
     private String phoneNumber;
-
-    private String photoUrl;
+    private String imageUrl;
 }
