@@ -19,6 +19,10 @@ public class UserController {
     private final BlogsService blogsService;
     private final EmailService service;
 
+    @GetMapping("/test")
+    public String getData(){
+        return "I am running";
+    }
 
     @PostMapping("/regis")
     public ResponseEntity<SignUpDto> register(@RequestBody SignUpDto dto){

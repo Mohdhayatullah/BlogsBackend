@@ -19,10 +19,7 @@ public class BlogsController {
     private final BlogsService blogsService;
     private final UserServices services;
 
-    @GetMapping("/test")
-    public String getData(){
-        return "I am running";
-    }
+
 
 //    @PostMapping
 //    public ResponseEntity<BlogDto> createBlogs(@RequestBody BlogDto blogDto){

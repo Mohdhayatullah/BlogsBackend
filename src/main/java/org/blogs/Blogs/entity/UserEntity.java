@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +39,10 @@ public class UserEntity {
     @Column(nullable = false,unique = true)
     private String phoneNumber;
 
-    @Column(length = 1000)
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String photoUrl;
+
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
