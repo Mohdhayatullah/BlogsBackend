@@ -1,0 +1,1 @@
+package org.blogs.Blogs.dto;import lombok.Data;import lombok.NoArgsConstructor;@Data@NoArgsConstructorpublic class CloudinaryDto {    private String publicId;    private String secureUrl;}
