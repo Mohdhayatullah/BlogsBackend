@@ -37,7 +37,7 @@ public class UserController {
     public ResponseEntity<LoginDto> login(@RequestBody LoginDto dto) {
         try {
             LoginDto user = userServices.login(dto);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(user);
+            return ResponseEntity.status(HttpStatus.OK).body(user);
         } catch (IllegalAccessException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
