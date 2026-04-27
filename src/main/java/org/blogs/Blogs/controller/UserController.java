@@ -4,6 +4,7 @@ package org.blogs.Blogs.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.blogs.Blogs.dto.LoginDto;
 import org.blogs.Blogs.dto.ProfileDto;
 import org.blogs.Blogs.dto.SignUpDto;
@@ -16,15 +17,20 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
+@Slf4j
 public class UserController {
 
     private final UserServices userServices;
 
+
+
     // ✅ TEST
     @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        return ResponseEntity.ok("I am running");
+    public void test() {
+        log.info("'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''test''''''''''''''''''''''''''''''''''''''''''''");
+        log.info("auto run by scheduler ============ for awake to render");
     }
+
 
 
     // ✅ REGISTER
