@@ -26,6 +26,7 @@ public class UserController {
         return ResponseEntity.ok("I am running");
     }
 
+
     // ✅ REGISTER
     @PostMapping("/register")
     public ResponseEntity<SignUpDto> register(@RequestBody SignUpDto dto) {

@@ -25,7 +25,6 @@ public class BlogsController {
     private final BlogsService blogsService;
     private final BlogViewService blogViewService;
 
-    // ✅ CREATE BLOG
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> createBlog(
             @RequestPart("data") String data,

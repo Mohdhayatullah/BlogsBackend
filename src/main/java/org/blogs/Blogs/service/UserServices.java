@@ -44,7 +44,7 @@ public class UserServices {
 //
         UserEntity newUser = toEntity(dto);
         repository.save(newUser);
-        service.sendMail(dto.getEmail(), "Registration successful","APPLICATION STATUS 200K\n\n😇Welcome to our BlogHub\n\nDiscover amazing stories, share your thoughts, and connect with writers from around the world.\n\n\n💕💕💕💕😍✅");
+        service.sendWelcomeEmail(newUser.getEmail(), newUser.getFullName());
         return toDto(newUser);
     }
 

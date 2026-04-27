@@ -35,14 +35,9 @@ public class UserEntity {
 
     private String public_id;
     private String imageUrl;
-//
+
     @Column(nullable = false,unique = true)
     private String phoneNumber;
-
-//    @Lob
-//    @Column(columnDefinition = "LONGTEXT")
-//    private String photoUrl;
-
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore

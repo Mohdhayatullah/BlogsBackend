@@ -61,10 +61,12 @@ public class BlogPost{
     @OneToMany(mappedBy = "blog", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BlogLike> likes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "blog", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BlogView> views = new ArrayList<>();
+
     private double averageRating;
 
     private long likeCount;
 
     private long viewCount;
-
 }

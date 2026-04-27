@@ -12,6 +12,7 @@ import org.blogs.Blogs.repository.BlogRepo;
 import org.blogs.Blogs.repository.FeedRepo;
 import org.blogs.Blogs.repository.UserRepository;
 import org.blogs.Blogs.util.CloudinaryService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,10 +24,15 @@ import java.util.List;
 public class BlogsService {
 
     private final BlogRepo blogRepo;
-    private final UserRepository userRepository;
+//    private final UserRepository userRepository;
+
     private final FeedRepo feedRepo;
     private final UserServices services;
     public final CloudinaryService cloudinaryService;
+    private final EmailService emailService;
+
+    @Value("${frontend.url}")
+    private String frontend;
 
 //    public void createBlogs(BlogDto blogDto, MultipartFile file) {
 //        UserEntity user = services.getCurrentProfile();
@@ -61,8 +67,10 @@ public BlogResponseDTO createBlogs(BlogDto blogDto, MultipartFile file) {
     }
 
     blogRepo.save(blog);
-
-    return toBlogDto(blog);
+    BlogResponseDTO blogResponseDTO = toBlogDto(blog);
+    this.emailService.sendBlogCreatedEmail(user.getEmail(),user.getFullName(),
+            blog.getTitle(), frontend+"/blogs/"+blogResponseDTO.getId());
+    return blogResponseDTO;
 }
 
 
