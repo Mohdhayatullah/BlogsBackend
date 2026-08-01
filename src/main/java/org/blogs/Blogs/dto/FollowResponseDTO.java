@@ -10,5 +10,6 @@ public class FollowResponseDTO {
     private long followersCount;
     private long followingCount;
     private boolean following;
+    private boolean follower;
     private String message;
 }

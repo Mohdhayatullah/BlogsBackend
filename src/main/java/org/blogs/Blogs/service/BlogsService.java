@@ -155,6 +155,17 @@ public class BlogsService {
         boolean likedByCurrentUser = currentUser != null
                 && blogLikeRepository.findByBlogAndUser(entity, currentUser).isPresent();
 
+        boolean isFollowing = currentUser != null
+                && followRepository.existsByFollowerAndFollowing(
+                currentUser,
+                entity.getUser());
+
+        boolean isFollower = currentUser != null
+                && followRepository.existsByFollowerAndFollowing(
+                entity.getUser(),
+                currentUser);
+
+
         return BlogResponseDTO.builder()
                 .id(entity.getId())
                 .title(entity.getTitle())
@@ -162,15 +173,16 @@ public class BlogsService {
                 .userId(entity.getUser().getId())
                 .userName(entity.getUser().getFullName())
                 .userImageUrl(entity.getUser().getImageUrl())
+                .imageUrl(entity.getImagePath())
                 .createdAt(entity.getCreatedAt())
-                .imageURl(entity.getImagePath())
                 .viewCount(entity.getViewCount())
                 .likeCount(entity.getLikeCount())
-                .published(entity.isPublished())
-                .slug(entity.getSlug())
+                .isPublished(entity.isPublished())
                 .averageRating(entity.getAverageRating())
                 .likedByCurrentUser(likedByCurrentUser)
-                .followingAuthor(followingAuthor)
+                .followingAuthor(isFollowing)
+                .isFollower(isFollower)        // replace with your actual logic
+                .isFollowing(followingAuthor)
                 .tags(entity.getTags())
                 .build();
     }
