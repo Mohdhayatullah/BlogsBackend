@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.blogs.Blogs.dto.BlogDto;
 import org.blogs.Blogs.dto.BlogResponseDTO;
-import org.blogs.Blogs.entity.UserEntity;
 import org.blogs.Blogs.service.BlogViewService;
 import org.blogs.Blogs.service.BlogsService;
 import org.blogs.Blogs.service.UserServices;
@@ -24,44 +23,44 @@ public class BlogsController {
 
     private final BlogsService blogsService;
     private final BlogViewService blogViewService;
+    private final UserServices userServices;
 
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<?> createBlog(
+    public ResponseEntity<BlogResponseDTO> createBlog(
             @RequestPart("data") String data,
             @RequestPart(value = "file", required = false) MultipartFile file) throws JsonProcessingException {
-        System.out.println(data);
         ObjectMapper objectMapper = new ObjectMapper();
-        BlogDto dto = objectMapper.readValue(data,BlogDto.class);
-        blogsService.createBlogs(dto, file);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Blog Successfully created");
+        BlogDto dto = objectMapper.readValue(data, BlogDto.class);
+        BlogResponseDTO response = blogsService.createBlogs(dto, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // ✅ GET ALL BLOGS
     @GetMapping
     public ResponseEntity<List<BlogResponseDTO>> getAllBlogs() {
         return ResponseEntity.ok(blogsService.getAllBlogs());
     }
 
-    // ✅ GET MY BLOGS
     @GetMapping("/private")
     public ResponseEntity<List<BlogResponseDTO>> getMyBlogs() {
         return ResponseEntity.ok(blogsService.getUserBlogs());
     }
 
-    // ✅ GET BLOG BY ID + VIEW TRACK
     @GetMapping("/{id}")
     public ResponseEntity<BlogResponseDTO> getBlogById(
             @PathVariable Long id,
-            @RequestParam(required = false) Long userId,
             HttpServletRequest request) {
 
         String ipAddress = request.getRemoteAddr();
-        blogViewService.addView(id, userId, ipAddress);
+        Long viewerId = null;
+        try {
+            viewerId = userServices.getCurrentProfile().getId();
+        } catch (RuntimeException ignored) {
+        }
 
+        blogViewService.addView(id, viewerId, ipAddress);
         return ResponseEntity.ok(blogsService.getBlogsById(id));
     }
 
-    // ✅ UPDATE BLOG
     @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public ResponseEntity<BlogResponseDTO> updateBlog(
             @PathVariable Long id,
@@ -69,12 +68,11 @@ public class BlogsController {
             @RequestPart(value = "file", required = false) MultipartFile file) throws JsonProcessingException {
 
         ObjectMapper objectMapper = new ObjectMapper();
-        BlogDto dto = objectMapper.readValue(data,BlogDto.class);
+        BlogDto dto = objectMapper.readValue(data, BlogDto.class);
         BlogResponseDTO response = blogsService.update(id, dto, file);
         return ResponseEntity.ok(response);
     }
 
-    // ✅ DELETE BLOG
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBlog(@PathVariable Long id) {
         blogsService.delete(id);

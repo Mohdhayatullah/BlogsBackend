@@ -30,4 +30,6 @@ public interface BlogRepo extends JpaRepository<BlogPost, Long> {
     void incrementViewCount(@Param("id") Long id);
 
     List<BlogPost> findByUserInOrderByCreatedAtDesc(List<UserEntity> followingUsers);
+
+    List<BlogPost> findByUserInAndPublishedTrueOrderByCreatedAtDesc(List<UserEntity> followingUsers);
 }

@@ -7,7 +7,6 @@ import org.blogs.Blogs.dto.LoginDto;
 import org.blogs.Blogs.dto.ProfileDto;
 import org.blogs.Blogs.dto.SignUpDto;
 import org.blogs.Blogs.entity.UserEntity;
-
 import org.blogs.Blogs.repository.UserRepository;
 import org.blogs.Blogs.util.CloudinaryService;
 import org.blogs.Blogs.util.JwtUtil;
@@ -34,14 +33,26 @@ public class UserServices {
     private final EmailService service;
     private final CloudinaryService cloudinaryService;
 
-
-
     @Transactional
     public SignUpDto registerUser(SignUpDto dto){
-        if(repository.existsByEmail(dto.getEmail())){
+        String normalizedEmail = normalize(dto.getEmail());
+        String normalizedPhone = normalize(dto.getPhoneNumber());
+
+        if (normalizedEmail == null) {
+            throw new RuntimeException("Email is required");
+        }
+
+        if(repository.existsByEmail(normalizedEmail)){
             throw new RuntimeException("Email already exist");
         }
-//
+
+        if (normalizedPhone != null && repository.existsByPhoneNumber(normalizedPhone)) {
+            throw new RuntimeException("Phone number already exist");
+        }
+
+        dto.setEmail(normalizedEmail);
+        dto.setPhoneNumber(normalizedPhone);
+
         UserEntity newUser = toEntity(dto);
         repository.save(newUser);
         service.sendWelcomeEmail(newUser.getEmail(), newUser.getFullName());
@@ -53,10 +64,8 @@ public class UserServices {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getEmail(),dto.getPassword()));
 
             String token = jwt.generateToken(dto.getEmail());
-            return Map.of(
-                    "token",token
-            );
-        }catch (Exception e){
+            return Map.of("token", token);
+        } catch (Exception e){
             throw new RuntimeException("Invalid email or password");
         }
     }
@@ -64,9 +73,8 @@ public class UserServices {
     public UserEntity getCurrentProfile(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return userRepository.findByEmail(authentication.getName())
-                .orElseThrow(()-> new UsernameNotFoundException("User not found with this email"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with this email"));
     }
-
 
     private UserEntity toEntity(SignUpDto dto){
         return UserEntity.builder()
@@ -88,44 +96,54 @@ public class UserServices {
                 .build();
     }
 
-
-
     public UserEntity forgetPassword(String pass){
         UserEntity user = getCurrentProfile();
         UserEntity newUser =
                 userRepository.findByEmail(user.getEmail())
-                        .orElseThrow(()-> new UsernameNotFoundException("User not found"));
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         newUser.setPassword(passwordEncoder.encode(pass));
         return userRepository.save(newUser);
     }
 
-    // Profile Api
     public ProfileDto getData(){
         UserEntity currentProfileUser = getCurrentProfile();
         return toProfileDto(currentProfileUser);
     }
 
     public ProfileDto putData(ProfileDto dto, MultipartFile file) {
-
         UserEntity user = getCurrentProfile();
         if (user == null) {
             throw new UsernameNotFoundException("User not authenticated");
         }
 
-        if (dto.getFullName() != null) {
-            user.setFullName(dto.getFullName());
+        String normalizedName = normalize(dto.getFullName());
+        String normalizedPhone = normalize(dto.getPhoneNumber());
+        String normalizedEmail = normalize(dto.getEmail());
+
+        if (normalizedName != null) {
+            user.setFullName(normalizedName);
         }
 
-        if (dto.getPhoneNumber() != null) {
-            user.setPhoneNumber(dto.getPhoneNumber());
+        if (normalizedPhone != null
+                && !normalizedPhone.equals(user.getPhoneNumber())
+                && userRepository.existsByPhoneNumber(normalizedPhone)) {
+            throw new RuntimeException("Phone number already exist");
         }
 
-        // ⚠️ optional: restrict email update
-        if (dto.getEmail() != null) {
-            user.setEmail(dto.getEmail());
+        if (normalizedPhone != null) {
+            user.setPhoneNumber(normalizedPhone);
         }
 
-        // ✅ FIXED
+        if (normalizedEmail != null
+                && !normalizedEmail.equalsIgnoreCase(user.getEmail())
+                && userRepository.existsByEmail(normalizedEmail)) {
+            throw new RuntimeException("Email already exist");
+        }
+
+        if (normalizedEmail != null) {
+            user.setEmail(normalizedEmail);
+        }
+
         if (file != null && !file.isEmpty()) {
             CloudinaryDto cloudinaryDto =
                     cloudinaryService.uploadOrReplaceImage(user.getPublic_id(), file);
@@ -138,7 +156,6 @@ public class UserServices {
         return toProfileDto(user);
     }
 
-    // mapping method to assist DTO and sensitive data prevent
     private ProfileDto toProfileDto(UserEntity user){
         return ProfileDto.builder()
                 .id(user.getId())
@@ -149,13 +166,12 @@ public class UserServices {
                 .build();
     }
 
-    private UserEntity toUserEntity(ProfileDto user){
-        return UserEntity.builder()
-                .fullName(user.getFullName())
-                .email(user.getEmail())
-                .phoneNumber(user.getPhoneNumber())
-                .imageUrl(user.getImageUrl())
-                .build();
-    }
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
 
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
 }

@@ -1,7 +1,6 @@
 package org.blogs.Blogs.service;
 
 import jakarta.transaction.Transactional;
-
 import lombok.RequiredArgsConstructor;
 import org.blogs.Blogs.entity.BlogPost;
 import org.blogs.Blogs.entity.FeedBack;
@@ -9,7 +8,6 @@ import org.blogs.Blogs.entity.UserEntity;
 import org.blogs.Blogs.repository.BlogRepo;
 import org.blogs.Blogs.repository.FeedRepo;
 import org.blogs.Blogs.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -23,16 +21,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class FeedBackService {
 
-
     private final FeedRepo feedBackRepository;
-
     private final BlogRepo blogPostRepository;
-
     private final UserRepository userRepository;
 
     public FeedBack createFeedback(Long blogId, double rating, String comment) {
-
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         UserEntity user = userRepository.findByEmail(email)
@@ -41,7 +34,6 @@ public class FeedBackService {
         BlogPost blog = blogPostRepository.findById(blogId)
                 .orElseThrow(() -> new RuntimeException("Blog post not found"));
 
-        // Check if user already gave feedback for this blog
         Optional<FeedBack> existingFeedback = feedBackRepository.findByUserIdAndBlogId(user.getId(), blogId);
         if (existingFeedback.isPresent()) {
             throw new RuntimeException("User has already provided feedback for this blog post");
@@ -53,7 +45,10 @@ public class FeedBackService {
                 .comment(comment)
                 .blog(blog)
                 .build();
-        return feedBackRepository.save(feedback);
+
+        FeedBack savedFeedback = feedBackRepository.save(feedback);
+        updateBlogAverageRating(blog);
+        return savedFeedback;
     }
 
     public List<FeedBack> getFeedbackByBlogId(Long blogId) {
@@ -70,14 +65,17 @@ public class FeedBackService {
 
         feedback.setRating(rating);
         feedback.setComment(comment);
-        return feedBackRepository.save(feedback);
+        FeedBack updatedFeedback = feedBackRepository.save(feedback);
+        updateBlogAverageRating(feedback.getBlog());
+        return updatedFeedback;
     }
 
     public void deleteFeedback(Long feedbackId) {
-        if (!feedBackRepository.existsById(feedbackId)) {
-            throw new RuntimeException("Feedback not found");
-        }
-        feedBackRepository.deleteById(feedbackId);
+        FeedBack feedback = feedBackRepository.findById(feedbackId)
+                .orElseThrow(() -> new RuntimeException("Feedback not found"));
+        BlogPost blog = feedback.getBlog();
+        feedBackRepository.delete(feedback);
+        updateBlogAverageRating(blog);
     }
 
     public double getAverageRatingForBlog(Long blogId) {
@@ -86,5 +84,11 @@ public class FeedBackService {
                 .mapToDouble(FeedBack::getRating)
                 .average()
                 .orElse(0.0);
+    }
+
+    private void updateBlogAverageRating(BlogPost blog) {
+        double averageRating = getAverageRatingForBlog(blog.getId());
+        blog.setAverageRating(averageRating);
+        blogPostRepository.save(blog);
     }
 }
