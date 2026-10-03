@@ -56,7 +56,7 @@ public class BlogsService {
                 user.getEmail(),
                 user.getFullName(),
                 blog.getTitle(),
-                frontend + "/blogs/" + blogResponseDTO.getId()
+                frontend + "/blogs/v1.0/" + blogResponseDTO.getId()
         );
         return blogResponseDTO;
     }
